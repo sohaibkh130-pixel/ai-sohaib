@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sohaib AI — Personal AI Assistant</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f3ff',
+              100: '#e0e7ff',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+              purple: '#7c3aed',
+              darkBg: '#0b0f19',
+              cardBg: '#111827',
+              sidebarBg: '#0d1322',
+              border: '#1e293b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome & Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Markdown & Code Highlighting -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #0b0f19;
+      color: #f3f4f6;
+    }
+    
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* Glassmorphism Effect */
+    .glass-panel {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .glass-header {
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    /* Gradient Glowing Accents */
+    .brand-gradient-text {
+      background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand-gradient-bg {
+      background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    }
+    .brand-gradient-hover:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #6d28d9 100%);
+    }
+
+    /* Markdown Styling Inside Chat Bubbles */
+    .prose p { margin-bottom: 0.75rem; line-height: 1.6; }
+    .prose p:last-child { margin-bottom: 0; }
+    .prose pre { 
+      background-color: #0d1117 !important; 
+      border-radius: 0.5rem; 
+      margin: 0.75rem 0; 
+      border: 1px solid #21262d;
+      overflow-x: auto;
+    }
+    .prose code { 
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.875em;
+    }
+    .prose :not(pre) > code {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 0.15rem 0.4rem;
+      border-radius: 0.25rem;
+      color: #93c5fd;
+    }
+    .prose ul { list-style-type: disc; margin-left: 1.25rem; margin-bottom: 0.75rem; }
+    .prose ol { list-style-type: decimal; margin-left: 1.25rem; margin-bottom: 0.75rem; }
+    .prose li { margin-bottom: 0.25rem; }
+    .prose h1, .prose h2, .prose h3, .prose h4 { 
+      color: #f3f4f6; 
+      font-weight: 600; 
+      margin-top: 1rem; 
+      margin-bottom: 0.5rem; 
+    }
+
+    /* RTL Support for Arabic & Darija */
+    .rtl-text {
+      direction: rtl;
+      text-align: right;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Pulse Glow Effect */
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+    .animate-glow {
+      animation: pulse-glow 3s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="h-screen flex overflow-hidden bg-[#0b0f19] text-gray-100">
+
+  <!-- Mobile Overlay -->
+  <div id="mobile-overlay" class="fixed inset-0 bg-black/60 z-40 hidden md:hidden backdrop-blur-sm"></div>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 bg-[#0d1322] border-r border-[#1e293b] flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0">
+    
+    <!-- Sidebar Header -->
+    <div class="p-4 border-b border-[#1e293b] flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl brand-gradient-bg flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <i class="fa-solid font-bold text-white text-lg">S</i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg brand-gradient-text leading-tight">Sohaib AI</h1>
+          <p class="text-xs text-gray-400">Intelligent Assistant</p>
+        </div>
+      </div>
+      <button id="close-sidebar-btn" class="md:hidden text-gray-400 hover:text-white p-2">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <!-- New Chat Button -->
+    <div class="p-3">
+      <button id="new-chat-btn" class="w-full brand-gradient-bg brand-gradient-hover text-white font-medium py-2.5 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-md hover:shadow-blue-500/25 transition-all">
+        <i class="fa-solid fa-plus"></i>
+        <span>New Chat</span>
+      </button>
+    </div>
+
+    <!-- History List -->
+    <div class="flex-1 overflow-y-auto px-3 py-2 space-y-1" id="chat-history-list">
+      <!-- Dynamically Rendered History -->
+    </div>
+
+    <!-- Sidebar Footer / Settings Button -->
+    <div class="p-3 border-t border-[#1e293b] space-y-1">
+      <button id="open-settings-btn" class="w-full text-left px-3 py-2.5 rounded-xl text-gray-300 hover:bg-[#1a233a] flex items-center justify-between transition">
+        <div class="flex items-center space-x-2.5">
+          <i class="fa-solid fa-gear text-blue-400"></i>
+          <span class="text-sm font-medium">Settings & API Keys</span>
+        </div>
+        <span id="api-key-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">Keys Needed</span>
+      </button>
+
+      <button id="open-deploy-guide-btn" class="w-full text-left px-3 py-2 rounded-xl text-gray-400 hover:text-gray-200 hover:bg-[#1a233a] flex items-center space-x-2.5 text-xs transition">
+        <i class="fa-solid fa-cloud-arrow-up text-purple-400"></i>
+        <span>Vercel Free Deploy Guide</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CHAT AREA -->
+  <main class="flex-1 flex flex-col h-full min-w-0 bg-[#0b0f19] relative">
+    
+    <!-- Top Bar Navigation -->
+    <header class="glass-header h-16 border-b border-[#1e293b] px-4 flex items-center justify-between z-10">
+      <div class="flex items-center space-x-3">
+        <button id="open-sidebar-btn" class="md:hidden text-gray-300 hover:text-white p-2">
+          <i class="fa-solid fa-bars text-lg"></i>
+        </button>
+        
+        <!-- Active Model Selector -->
+        <div class="relative">
+          <select id="model-selector" class="bg-[#141c2e] text-gray-200 text-sm font-medium rounded-xl border border-[#23314d] px-3 py-1.5 pr-8 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none shadow-sm">
+            <option value="gemini">Google Gemini Flash-Lite (Free tier, if available)</option>
+            <option value="openrouter">Free AI (OpenRouter / Llama 3)</option>
+            <option value="openai">OpenAI GPT-4o mini</option>
+            <option value="claude">Anthropic Claude 3.5 Sonnet</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-gray-400">
+            <i class="fa-solid fa-chevron-down text-xs"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <span class="text-xs text-gray-400 hidden sm:inline-block">Language Auto-Detects (Darija, Ar, Fr, En)</span>
+        <button id="clear-chat-btn" title="Clear Current Chat" class="text-gray-400 hover:text-red-400 p-2 rounded-lg hover:bg-[#1a233a] transition">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Message Container -->
+    <div id="messages-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 max-w-4xl mx-auto w-full">
+      
+      <!-- Welcome Screen (When Chat is Empty) -->
+      <div id="welcome-screen" class="h-full flex flex-col items-center justify-center text-center py-10 space-y-6">
+        <div class="relative">
+          <div class="w-16 h-16 rounded-2xl brand-gradient-bg flex items-center justify-center shadow-xl shadow-blue-500/30 text-2xl font-extrabold text-white">
+            S
+          </div>
+          <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-[#0b0f19] flex items-center justify-center text-[10px] text-white">
+            <i class="fa-solid fa-check"></i>
+          </div>
+        </div>
+
+        <div class="max-w-md space-y-2">
+          <h2 class="text-2xl font-bold text-white">Marhaba! Welcome to <span class="brand-gradient-text">Sohaib AI</span></h2>
+          <p class="text-sm text-gray-400">Your personal intelligent assistant. Ask me questions in Moroccan Darija, Arabic, French, or English.</p>
+        </div>
+
+        <!-- Quick Prompts Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl text-left mt-4">
+          <button class="prompt-card glass-panel p-4 rounded-xl border border-[#1e293b] hover:border-blue-500/50 hover:bg-[#151f33] transition group">
+            <div class="flex items-center space-x-3 mb-1">
+              <i class="fa-solid fa-language text-blue-400 group-hover:scale-110 transition"></i>
+              <span class="font-medium text-sm text-gray-200">Moroccan Darija</span>
+            </div>
+            <p class="text-xs text-gray-400">اشنو هما أسهل الطرق باش نتعلم البرمجة من الزيرو؟</p>
+          </button>
+
+          <button class="prompt-card glass-panel p-4 rounded-xl border border-[#1e293b] hover:border-purple-500/50 hover:bg-[#151f33] transition group">
+            <div class="flex items-center space-x-3 mb-1">
+              <i class="fa-solid fa-code text-purple-400 group-hover:scale-110 transition"></i>
+              <span class="font-medium text-sm text-gray-200">Python Coding</span>
+            </div>
+            <p class="text-xs text-gray-400">Write a Python script to scrape news headlines safely.</p>
+          </button>
+
+          <button class="prompt-card glass-panel p-4 rounded-xl border border-[#1e293b] hover:border-blue-500/50 hover:bg-[#151f33] transition group">
+            <div class="flex items-center space-x-3 mb-1">
+              <i class="fa-solid fa-file-pen text-blue-400 group-hover:scale-110 transition"></i>
+              <span class="font-medium text-sm text-gray-200">French Writing</span>
+            </div>
+            <p class="text-xs text-gray-400">Aide-moi à rédiger une lettre de motivation professionnelle.</p>
+          </button>
+
+          <button class="prompt-card glass-panel p-4 rounded-xl border border-[#1e293b] hover:border-purple-500/50 hover:bg-[#151f33] transition group">
+            <div class="flex items-center space-x-3 mb-1">
+              <i class="fa-solid fa-brain text-purple-400 group-hover:scale-110 transition"></i>
+              <span class="font-medium text-sm text-gray-200">Math & Explanations</span>
+            </div>
+            <p class="text-xs text-gray-400">Explain Neural Networks in simple terms with an example.</p>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Message Composer -->
+    <div class="p-3 md:p-4 border-t border-[#1e293b] bg-[#0d1322]/80 backdrop-blur-md">
+      <div class="max-w-4xl mx-auto relative">
+        <form id="chat-form" class="relative flex items-end glass-panel rounded-2xl border border-[#23314d] focus-within:border-blue-500/80 transition shadow-lg">
+          <textarea id="message-input" rows="1" placeholder="Type a message or prompt in any language..." class="w-full bg-transparent text-gray-100 placeholder-gray-500 px-4 py-3.5 max-h-36 resize-none focus:outline-none text-sm md:text-base leading-relaxed"></textarea>
+          
+          <div class="flex items-center p-2 space-x-2">
+            <button type="submit" id="send-btn" class="brand-gradient-bg text-white w-10 h-10 rounded-xl flex items-center justify-center hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-md">
+              <i class="fa-solid fa-paper-plane text-sm"></i>
+            </button>
+            <button type="button" id="stop-btn" class="hidden bg-red-600 hover:bg-red-700 text-white w-10 h-10 rounded-xl flex items-center justify-center transition">
+              <i class="fa-solid fa-square text-sm"></i>
+            </button>
+          </div>
+        </form>
+        <p class="text-[11px] text-gray-500 text-center mt-2">Sohaib AI provides fast & multi-model responses. Shift+Enter for line break.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settings-modal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden backdrop-blur-md">
+    <div class="bg-[#0d1322] border border-[#1e293b] w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      
+      <div class="p-4 border-b border-[#1e293b] flex items-center justify-between bg-[#111827]">
+        <h3 class="font-bold text-lg text-white flex items-center space-x-2">
+          <i class="fa-solid fa-sliders text-blue-400"></i>
+          <span>Settings & API Configuration</span>
+        </h3>
+        <button id="close-settings-btn" class="text-gray-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6 text-sm">
+        
+        <!-- Quick Info Box -->
+        <div class="bg-blue-500/10 border border-blue-500/20 p-3.5 rounded-xl text-blue-200 text-xs leading-relaxed">
+          <i class="fa-solid fa-circle-info mr-1 text-blue-400"></i>
+          For local testing, API keys are saved in this browser only. This is not secure server-side storage. Do not publish this HTML with a key saved in the browser; use a backend with environment variables for a public website.
+        </div>
+
+        <!-- Provider API Keys -->
+        <div class="space-y-4">
+          
+          <!-- Gemini Key -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="font-semibold text-gray-200">Google Gemini API Key <span class="text-xs text-emerald-400 font-normal">(Recommended / Free Tier Available)</span></label>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-blue-400 hover:underline">Get Free Key <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>
+            </div>
+            <input type="password" id="key-gemini" placeholder="AIzaSy..." class="w-full bg-[#141c2e] border border-[#23314d] rounded-xl px-3.5 py-2.5 text-gray-200 focus:outline-none focus:border-blue-500">
+          </div>
+
+          <!-- OpenRouter Key -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="font-semibold text-gray-200">OpenRouter API Key <span class="text-xs text-purple-400 font-normal">(Access Free Llama 3/Qwen)</span></label>
+              <a href="https://openrouter.ai/keys" target="_blank" class="text-xs text-blue-400 hover:underline">Get OpenRouter Key <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>
+            </div>
+            <input type="password" id="key-openrouter" placeholder="sk-or-v1-..." class="w-full bg-[#141c2e] border border-[#23314d] rounded-xl px-3.5 py-2.5 text-gray-200 focus:outline-none focus:border-blue-500">
+          </div>
+
+          <!-- OpenAI Key -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="font-semibold text-gray-200">OpenAI API Key</label>
+              <a href="https://platform.openai.com/api-keys" target="_blank" class="text-xs text-blue-400 hover:underline">Get OpenAI Key <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>
+            </div>
+            <input type="password" id="key-openai" placeholder="sk-..." class="w-full bg-[#141c2e] border border-[#23314d] rounded-xl px-3.5 py-2.5 text-gray-200 focus:outline-none focus:border-blue-500">
+          </div>
+
+          <!-- Claude Key -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="font-semibold text-gray-200">Anthropic Claude API Key</label>
+              <a href="https://console.anthropic.com/" target="_blank" class="text-xs text-blue-400 hover:underline">Get Anthropic Key <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>
+            </div>
+            <input type="password" id="key-claude" placeholder="sk-ant-..." class="w-full bg-[#141c2e] border border-[#23314d] rounded-xl px-3.5 py-2.5 text-gray-200 focus:outline-none focus:border-blue-500">
+          </div>
+
+        </div>
+
+        <!-- System Prompt Customization -->
+        <div>
+          <label class="block font-semibold text-gray-200 mb-1.5">Custom System Prompt / AI Personality</label>
+          <textarea id="system-prompt" rows="3" class="w-full bg-[#141c2e] border border-[#23314d] rounded-xl p-3 text-gray-200 text-xs focus:outline-none focus:border-blue-500 leading-relaxed"></textarea>
+        </div>
+
+      </div>
+
+      <div class="p-4 border-t border-[#1e293b] bg-[#111827] flex justify-end space-x-3">
+        <button id="save-settings-btn" class="brand-gradient-bg brand-gradient-hover text-white font-medium px-5 py-2 rounded-xl transition shadow-md">
+          Save Settings
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DEPLOYMENT GUIDE MODAL -->
+  <div id="deploy-modal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden backdrop-blur-md">
+    <div class="bg-[#0d1322] border border-[#1e293b] w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      
+      <div class="p-4 border-b border-[#1e293b] flex items-center justify-between bg-[#111827]">
+        <h3 class="font-bold text-lg text-white flex items-center space-x-2">
+          <i class="fa-solid fa-rocket text-purple-400"></i>
+          <span>Free Vercel Serverless Deployment Guide</span>
+        </h3>
+        <button id="close-deploy-btn" class="text-gray-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <p class="text-gray-200 font-medium">To hide API keys securely on the server side instead of browser storage, deploy Sohaib AI for free on Vercel:</p>
+        
+        <ol class="list-decimal list-inside space-y-2 text-gray-400">
+          <li>Create a free account on <a href="https://vercel.com" target="_blank" class="text-blue-400 underline">Vercel.com</a> and install Node.js locally.</li>
+          <li>Structure your project folder like this:
+            <pre class="bg-[#070a12] p-3 rounded-lg border border-[#1e293b] text-gray-300 font-mono text-xs my-1 overflow-x-auto">
+my-sohaib-ai/
+├── index.html
+├── vercel.json
+└── api/
+    └── chat.js
+            </pre>
+          </li>
+          <li>Add Environment Variables in Vercel Settings:
+            <ul class="list-disc list-inside ml-4 text-gray-400 mt-1">
+              <li><code class="text-blue-300">GEMINI_API_KEY</code></li>
+              <li><code class="text-purple-300">OPENROUTER_API_KEY</code></li>
+              <li><code class="text-green-300">OPENAI_API_KEY</code></li>
+            </ul>
+          </li>
+          <li>Run <code class="bg-[#1e293b] px-1.5 py-0.5 rounded text-blue-300">vercel deploy</code> in your terminal. You get a live HTTPS URL with 0 MAD cost!</li>
+        </ol>
+      </div>
+
+      <div class="p-4 border-t border-[#1e293b] bg-[#111827] flex justify-end">
+        <button id="close-deploy-modal-btn" class="bg-[#1e293b] hover:bg-[#2d3d59] text-white px-4 py-2 rounded-xl transition">Close</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC JavaScript -->
+  <script>
+    // --- STATE MANAGEMENT ---
+    const DEFAULT_SYSTEM_PROMPT = `You are Sohaib AI, a highly intelligent, polite, respectful, and friendly personal AI assistant. 
+You communicate naturally and fluently in Moroccan Darija, Standard Arabic, French, and English.
+Always respond in the primary language used by the user. If the user writes in Moroccan Darija (using Arabic or Latin letters), reply in natural Moroccan Darija.
+You are skilled in software programming, mathematics, creative writing, science, and general tutoring.`;
+
+    let state = {
+      chats: JSON.parse(localStorage.getItem('sohaib_ai_chats') || '[]'),
+      activeChatId: null,
+      keys: {
+        gemini: localStorage.getItem('sohaib_key_gemini') || '',
+        openrouter: localStorage.getItem('sohaib_key_openrouter') || '',
+        openai: localStorage.getItem('sohaib_key_openai') || '',
+        claude: localStorage.getItem('sohaib_key_claude') || ''
+      },
+      systemPrompt: localStorage.getItem('sohaib_system_prompt') || DEFAULT_SYSTEM_PROMPT,
+      selectedModel: localStorage.getItem('sohaib_selected_model') || 'gemini',
+      isGenerating: false,
+      abortController: null
+    };
+
+    // --- DOM ELEMENTS ---
+    const sidebar = document.getElementById('sidebar');
+    const mobileOverlay = document.getElementById('mobile-overlay');
+    const openSidebarBtn = document.getElementById('open-sidebar-btn');
+    const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+    const newChatBtn = document.getElementById('new-chat-btn');
+    const chatHistoryList = document.getElementById('chat-history-list');
+    
+    const messagesContainer = document.getElementById('messages-container');
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const modelSelector = document.getElementById('model-selector');
+    const clearChatBtn = document.getElementById('clear-chat-btn');
+    const apiKeyBadge = document.getElementById('api-key-badge');
+
+    const settingsModal = document.getElementById('settings-modal');
+    const openSettingsBtn = document.getElementById('open-settings-btn');
+    const closeSettingsBtn = document.getElementById('close-settings-btn');
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+
+    const deployModal = document.getElementById('deploy-modal');
+    const openDeployBtn = document.getElementById('open-deploy-guide-btn');
+    const closeDeployBtn = document.getElementById('close-deploy-btn');
+    const closeDeployModalBtn = document.getElementById('close-deploy-modal-btn');
+
+    // Show unexpected JavaScript errors in the chat instead of failing silently.
+    window.addEventListener('error', (event) => {
+      try {
+        showErrorAlert(`Application error: ${event.message || 'Unknown JavaScript error'}. Try reloading the page.`);
+      } catch (_) {}
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      try {
+        showErrorAlert(`Unexpected error: ${event.reason?.message || String(event.reason || 'Unknown error')}`);
+      } catch (_) {}
+    });
+
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', () => {
+      modelSelector.value = state.selectedModel;
+      updateApiKeyBadge();
+      renderChatHistory();
+
+      if (state.chats.length > 0) {
+        loadChat(state.chats[0].id);
+      } else {
+        createNewChat();
+      }
+
+      // Configure Marked Options for Code Highlighting
+      marked.setOptions({
+        highlight: function(code, lang) {
+          if (lang && hljs.getLanguage(lang)) {
+            return hljs.highlight(code, { language: lang }).value;
+          }
+          return hljs.highlightAuto(code).value;
+        },
+        breaks: true
+      });
+    });
+
+    // --- SIDEBAR ACTIONS & NAVIGATION ---
+    openSidebarBtn.addEventListener('click', () => {
+      sidebar.classList.remove('-translate-x-full');
+      mobileOverlay.classList.remove('hidden');
+    });
+
+    const closeSidebar = () => {
+      sidebar.classList.add('-translate-x-full');
+      mobileOverlay.classList.add('hidden');
+    };
+
+    closeSidebarBtn.addEventListener('click', closeSidebar);
+    mobileOverlay.addEventListener('click', closeSidebar);
+
+    newChatBtn.addEventListener('click', () => {
+      createNewChat();
+      closeSidebar();
+    });
+
+    // --- CHAT MANAGEMENT ---
+    function createNewChat() {
+      const newChat = {
+        id: 'chat_' + Date.now(),
+        title: 'New Conversation',
+        messages: [],
+        timestamp: Date.now()
+      };
+      state.chats.unshift(newChat);
+      saveChatsToStorage();
+      loadChat(newChat.id);
+      renderChatHistory();
+    }
+
+    function saveChatsToStorage() {
+      localStorage.setItem('sohaib_ai_chats', JSON.stringify(state.chats));
+    }
+
+    function loadChat(chatId) {
+      state.activeChatId = chatId;
+      renderChatHistory();
+      renderMessages();
+    }
+
+    function deleteChat(chatId, event) {
+      event.stopPropagation();
+      state.chats = state.chats.filter(c => c.id !== chatId);
+      saveChatsToStorage();
+
+      if (state.activeChatId === chatId) {
+        if (state.chats.length > 0) {
+          loadChat(state.chats[0].id);
+        } else {
+          createNewChat();
+        }
+      } else {
+        renderChatHistory();
+      }
+    }
+
+    function renderChatHistory() {
+      chatHistoryList.innerHTML = '';
+      state.chats.forEach(chat => {
+        const isActive = chat.id === state.activeChatId;
+        const item = document.createElement('div');
+        item.className = `group flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer text-sm transition ${
+          isActive ? 'bg-[#18233c] text-white font-medium border border-blue-500/30' : 'text-gray-400 hover:bg-[#141c2e] hover:text-gray-200'
+        }`;
+        
+        item.onclick = () => loadChat(chat.id);
+
+        item.innerHTML = `
+          <div class="flex items-center space-x-2.5 min-w-0 flex-1">
+            <i class="fa-regular fa-message text-xs ${isActive ? 'text-blue-400' : 'text-gray-500'}"></i>
+            <span class="truncate">${escapeHtml(chat.title)}</span>
+          </div>
+          <button onclick="deleteChat('${chat.id}', event)" class="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 p-1 transition">
+            <i class="fa-solid fa-trash-can text-xs"></i>
+          </button>
+        `;
+        chatHistoryList.appendChild(item);
+      });
+    }
+
+    function renderMessages() {
+      const activeChat = state.chats.find(c => c.id === state.activeChatId);
+      messagesContainer.innerHTML = '';
+
+      if (!activeChat || activeChat.messages.length === 0) {
+        welcomeScreen.classList.remove('hidden');
+        messagesContainer.appendChild(welcomeScreen);
+        return;
+      }
+
+      welcomeScreen.classList.add('hidden');
+
+      activeChat.messages.forEach((msg, index) => {
+        appendMessageBubble(msg.role, msg.content, index);
+      });
+
+      scrollToBottom();
+    }
+
+    // Auto Detect Arabic / Darija Text for RTL Alignment
+    function isArabicOrDarija(text) {
+      const arabicPattern = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/;
+      return arabicPattern.test(text);
+    }
+
+    function appendMessageBubble(role, content, index) {
+      const isUser = role === 'user';
+      const isRtl = isArabicOrDarija(content);
+
+      const wrapper = document.createElement('div');
+      wrapper.className = `flex flex-col ${isUser ? 'items-end' : 'items-start'} mb-4`;
+
+      const header = document.createElement('div');
+      header.className = `flex items-center space-x-2 mb-1 text-xs text-gray-400 ${isUser ? 'flex-row-reverse space-x-reverse' : ''}`;
+      header.innerHTML = `
+        <span class="font-semibold text-gray-300">${isUser ? 'You' : 'Sohaib AI'}</span>
+        <span>•</span>
+        <span class="text-[10px]">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+      `;
+
+      const bubble = document.createElement('div');
+      bubble.className = `max-w-[88%] md:max-w-[80%] rounded-2xl p-4 shadow-sm text-sm leading-relaxed ${
+        isUser 
+          ? 'brand-gradient-bg text-white rounded-tr-none' 
+          : 'glass-panel text-gray-100 border border-[#1e293b] rounded-tl-none'
+      } ${isRtl ? 'rtl-text' : ''}`;
+
+      if (isUser) {
+        bubble.textContent = content;
+      } else {
+        bubble.className += ' prose prose-invert';
+        bubble.innerHTML = marked.parse(content);
+        
+        // Add Copy Code Buttons to Code Blocks
+        bubble.querySelectorAll('pre').forEach(pre => {
+          const copyBtn = document.createElement('button');
+          copyBtn.className = 'text-[11px] bg-slate-800 hover:bg-slate-700 text-gray-300 px-2 py-1 rounded border border-slate-700 float-right mb-2 transition';
+          copyBtn.innerHTML = '<i class="fa-regular fa-copy mr-1"></i>Copy';
+          copyBtn.onclick = () => {
+            const codeText = pre.querySelector('code')?.innerText || pre.innerText;
+            navigator.clipboard.writeText(codeText);
+            copyBtn.innerHTML = '<i class="fa-solid fa-check text-emerald-400 mr-1"></i>Copied!';
+            setTimeout(() => { copyBtn.innerHTML = '<i class="fa-regular fa-copy mr-1"></i>Copy'; }, 2000);
+          };
+          pre.prepend(copyBtn);
+        });
+      }
+
+      wrapper.appendChild(header);
+      wrapper.appendChild(bubble);
+
+      // Add Action Buttons for AI Responses
+      if (!isUser && content) {
+        const actions = document.createElement('div');
+        actions.className = 'flex items-center space-x-3 mt-1.5 ml-1 text-xs text-gray-500';
+        actions.innerHTML = `
+          <button onclick="copyMessageText('${index}')" class="hover:text-gray-300 flex items-center space-x-1 transition">
+            <i class="fa-regular fa-copy text-[11px]"></i> <span>Copy</span>
+          </button>
+          <button onclick="regenerateLastResponse()" class="hover:text-gray-300 flex items-center space-x-1 transition">
+            <i class="fa-solid fa-rotate-right text-[11px]"></i> <span>Regenerate</span>
+          </button>
+        `;
+        wrapper.appendChild(actions);
+      }
+
+      messagesContainer.appendChild(wrapper);
+    }
+
+    function scrollToBottom() {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // --- SETTINGS & CONFIGURATION ---
+    openSettingsBtn.addEventListener('click', () => {
+      document.getElementById('key-gemini').value = state.keys.gemini;
+      document.getElementById('key-openrouter').value = state.keys.openrouter;
+      document.getElementById('key-openai').value = state.keys.openai;
+      document.getElementById('key-claude').value = state.keys.claude;
+      document.getElementById('system-prompt').value = state.systemPrompt;
+      settingsModal.classList.remove('hidden');
+    });
+
+    closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+    saveSettingsBtn.addEventListener('click', () => {
+      state.keys.gemini = document.getElementById('key-gemini').value.trim();
+      state.keys.openrouter = document.getElementById('key-openrouter').value.trim();
+      state.keys.openai = document.getElementById('key-openai').value.trim();
+      state.keys.claude = document.getElementById('key-claude').value.trim();
+      state.systemPrompt = document.getElementById('system-prompt').value.trim() || DEFAULT_SYSTEM_PROMPT;
+
+      localStorage.setItem('sohaib_key_gemini', state.keys.gemini);
+      localStorage.setItem('sohaib_key_openrouter', state.keys.openrouter);
+      localStorage.setItem('sohaib_key_openai', state.keys.openai);
+      localStorage.setItem('sohaib_key_claude', state.keys.claude);
+      localStorage.setItem('sohaib_system_prompt', state.systemPrompt);
+
+      updateApiKeyBadge();
+      settingsModal.classList.add('hidden');
+    });
+
+    function updateApiKeyBadge() {
+      const hasAnyKey = state.keys.gemini || state.keys.openrouter || state.keys.openai || state.keys.claude;
+      if (hasAnyKey) {
+        apiKeyBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        apiKeyBadge.textContent = 'Configured';
+      } else {
+        apiKeyBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30';
+        apiKeyBadge.textContent = 'Keys Needed';
+      }
+    }
+
+    modelSelector.addEventListener('change', (e) => {
+      state.selectedModel = e.target.value;
+      localStorage.setItem('sohaib_selected_model', state.selectedModel);
+    });
+
+    openDeployBtn.addEventListener('click', () => deployModal.classList.remove('hidden'));
+    closeDeployBtn.addEventListener('click', () => deployModal.classList.add('hidden'));
+    closeDeployModalBtn.addEventListener('click', () => deployModal.classList.add('hidden'));
+
+    clearChatBtn.addEventListener('click', () => {
+      const activeChat = state.chats.find(c => c.id === state.activeChatId);
+      if (activeChat) {
+        activeChat.messages = [];
+        saveChatsToStorage();
+        renderMessages();
+      }
+    });
+
+    // Prompt Card Click Shortcuts
+    document.querySelectorAll('.prompt-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const text = card.querySelector('p').innerText;
+        messageInput.value = text;
+        handleSendMessage();
+      });
+    });
+
+    // --- CHAT SUBMISSION & STREAMING LOGIC ---
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      handleSendMessage();
+    });
+
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage();
+      }
+    });
+
+    async function handleSendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || state.isGenerating) return;
+
+      const activeChat = state.chats.find(c => c.id === state.activeChatId);
+      if (!activeChat) return;
+
+      // Auto Title First Message
+      if (activeChat.messages.length === 0) {
+        activeChat.title = text.slice(0, 30) + (text.length > 30 ? '...' : '');
+      }
+
+      // Append User Message
+      activeChat.messages.push({ role: 'user', content: text });
+      saveChatsToStorage();
+      messageInput.value = '';
+      messageInput.style.height = 'auto';
+      renderMessages();
+
+      // Initiate AI API Call
+      await fetchAIResponse(activeChat);
+    }
+
+    async function fetchAIResponse(activeChat) {
+      const provider = state.selectedModel;
+      const apiKey = state.keys[provider];
+
+      if (!apiKey) {
+        showErrorAlert(`Missing API Key for <strong>${provider.toUpperCase()}</strong>. Please click <button onclick="openSettingsModal()" class="underline font-bold">Settings</button> to configure your key.`);
+        return;
+      }
+
+      state.isGenerating = true;
+      toggleSendStopButtons(true);
+
+      // Create AbortController for Cancellation
+      state.abortController = new AbortController();
+
+      // Placeholder Bubble for Streaming Output
+      const assistantMessageIndex = activeChat.messages.length;
+      activeChat.messages.push({ role: 'assistant', content: '' });
+      renderMessages();
+
+      try {
+        if (provider === 'gemini') {
+          await callGeminiAPI(apiKey, activeChat, assistantMessageIndex);
+        } else if (provider === 'openrouter') {
+          await callOpenRouterAPI(apiKey, activeChat, assistantMessageIndex);
+        } else if (provider === 'openai') {
+          await callOpenAIAPI(apiKey, activeChat, assistantMessageIndex);
+        } else if (provider === 'claude') {
+          await callClaudeAPI(apiKey, activeChat, assistantMessageIndex);
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          activeChat.messages[assistantMessageIndex].content += ' *(Generation stopped by user)*';
+        } else {
+          showErrorAlert(`API Error: ${err.message || 'Failed to fetch response'}`);
+          activeChat.messages.pop(); // Remove empty bubble on hard error
+        }
+      } finally {
+        state.isGenerating = false;
+        toggleSendStopButtons(false);
+        saveChatsToStorage();
+        renderMessages();
+      }
+    }
+
+    // --- API CONNECTORS ---
+
+    // 1. Google Gemini API — use generateContent for reliable responses.
+    // The old gemini-1.5-flash streaming endpoint may no longer be available,
+    // and the old SSE parser could silently discard responses split across chunks.
+    async function callGeminiAPI(apiKey, activeChat, msgIndex) {
+      const model = 'gemini-3.5-flash-lite';
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+      // Send prior conversation turns, including the latest user message,
+      // but exclude the empty assistant placeholder we added for the response.
+      const contents = activeChat.messages.slice(0, -1).map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      }));
+
+      const payload = {
+        systemInstruction: { parts: [{ text: state.systemPrompt }] },
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 4096
+        }
+      };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
+        body: JSON.stringify(payload),
+        signal: state.abortController.signal
+      });
+
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error(`Gemini returned an unreadable response (HTTP ${response.status}).`);
+      }
+
+      if (!response.ok) {
+        const apiMessage = data?.error?.message || `HTTP ${response.status}`;
+        if (response.status === 400) {
+          throw new Error(`Gemini rejected the request: ${apiMessage}. Check the selected model and request format.`);
+        }
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(`Gemini API key was rejected or does not have permission: ${apiMessage}`);
+        }
+        if (response.status === 429) {
+          throw new Error(`Gemini free quota or rate limit reached. Wait and try again, or check your Google AI Studio quota. Details: ${apiMessage}`);
+        }
+        throw new Error(`Gemini API error (${response.status}): ${apiMessage}`);
+      }
+
+      const answer = (data?.candidates?.[0]?.content?.parts || [])
+        .map(part => part.text || '')
+        .join('')
+        .trim();
+
+      if (!answer) {
+        const reason = data?.promptFeedback?.blockReason;
+        throw new Error(reason
+          ? `Gemini did not return an answer because the request was blocked (${reason}). Try rephrasing your message.`
+          : 'Gemini returned an empty answer. Please try again.');
+      }
+
+      activeChat.messages[msgIndex].content = answer;
+      updateLiveBubble(answer);
+    }
+
+    // 2. OpenRouter API (Free Models Access)
+    async function callOpenRouterAPI(apiKey, activeChat, msgIndex) {
+      const endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+
+      const messages = [
+        { role: 'system', content: state.systemPrompt },
+        ...activeChat.messages.slice(0, -1)
+      ];
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'meta-llama/llama-3.2-11b-vision-instruct:free',
+          messages: messages,
+          stream: true
+        }),
+        signal: state.abortController.signal
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'OpenRouter API failed');
+      }
+
+      await parseSSEStream(response, activeChat, msgIndex);
+    }
+
+    // 3. OpenAI API
+    async function callOpenAIAPI(apiKey, activeChat, msgIndex) {
+      const endpoint = 'https://api.openai.com/v1/chat/completions';
+
+      const messages = [
+        { role: 'system', content: state.systemPrompt },
+        ...activeChat.messages.slice(0, -1)
+      ];
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: messages,
+          stream: true
+        }),
+        signal: state.abortController.signal
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'OpenAI API failed');
+      }
+
+      await parseSSEStream(response, activeChat, msgIndex);
+    }
+
+    // 4. Anthropic Claude API
+    async function callClaudeAPI(apiKey, activeChat, msgIndex) {
+      const endpoint = 'https://api.anthropic.com/v1/messages';
+
+      const formattedMessages = activeChat.messages.slice(0, -1).map(m => ({
+        role: m.role,
+        content: m.content
+      }));
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'dangerously-allow-browser': 'true',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 2048,
+          system: state.systemPrompt,
+          messages: formattedMessages
+        }),
+        signal: state.abortController.signal
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Claude API failed (Note: Direct browser calls may require CORS proxy)');
+      }
+
+      const data = await response.json();
+      const text = data.content?.[0]?.text || '';
+      activeChat.messages[msgIndex].content = text;
+      updateLiveBubble(text);
+    }
+
+    // Helper SSE Parser for standard OpenAI/OpenRouter stream chunks
+    async function parseSSEStream(response, activeChat, msgIndex) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+            try {
+              const parsed = JSON.parse(line.replace('data: ', ''));
+              const content = parsed.choices?.[0]?.delta?.content || '';
+              activeChat.messages[msgIndex].content += content;
+              updateLiveBubble(activeChat.messages[msgIndex].content);
+            } catch (e) { /* ignore chunking JSON errors */ }
+          }
+        }
+      }
+    }
+
+    function updateLiveBubble(text) {
+      const bubbles = messagesContainer.querySelectorAll('.glass-panel');
+      const lastBubble = bubbles[bubbles.length - 1];
+      if (lastBubble) {
+        lastBubble.innerHTML = marked.parse(text);
+        scrollToBottom();
+      }
+    }
+
+    function toggleSendStopButtons(isGenerating) {
+      if (isGenerating) {
+        sendBtn.classList.add('hidden');
+        stopBtn.classList.remove('hidden');
+      } else {
+        sendBtn.classList.remove('hidden');
+        stopBtn.classList.add('hidden');
+      }
+    }
+
+    stopBtn.addEventListener('click', () => {
+      if (state.abortController) {
+        state.abortController.abort();
+      }
+    });
+
+    function showErrorAlert(message) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'bg-red-500/10 border border-red-500/30 text-red-300 p-4 rounded-xl text-sm mb-4 flex items-start space-x-3';
+      alertDiv.innerHTML = `
+        <i class="fa-solid fa-triangle-exclamation text-red-400 text-lg mt-0.5"></i>
+        <div class="flex-1">${message}</div>
+      `;
+      messagesContainer.appendChild(alertDiv);
+      scrollToBottom();
+    }
+
+    function openSettingsModal() {
+      settingsModal.classList.remove('hidden');
+    }
+
+    function copyMessageText(index) {
+      const activeChat = state.chats.find(c => c.id === state.activeChatId);
+      if (activeChat && activeChat.messages[index]) {
+        navigator.clipboard.writeText(activeChat.messages[index].content);
+      }
+    }
+
+    function regenerateLastResponse() {
+      const activeChat = state.chats.find(c => c.id === state.activeChatId);
+      if (activeChat && activeChat.messages.length >= 2) {
+        // Remove last assistant message
+        if (activeChat.messages[activeChat.messages.length - 1].role === 'assistant') {
+          activeChat.messages.pop();
+        }
+        renderMessages();
+        fetchAIResponse(activeChat);
+      }
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+  </script>
+</body>
+</html>
