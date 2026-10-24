@@ -468,7 +468,7 @@ pre.tree { background: #282c34; color: #abb2bf; padding: 12px 14px; border-radiu
     <div class="modal-body">
       <div class="note">
         <i class="fa-solid fa-circle-info"></i>
-        Free-only mode: only Gemini and OpenRouter free models are offered. Keep Google billing disabled and never add paid credits to OpenRouter if you want to avoid charges. API keys are stored in this browser only, which is not secure for a public website — for a public site use a protected backend.
+        Gemini and OpenRouter free models cost nothing (keep Google billing disabled and never add credits to OpenRouter). The own-key AIs below (ChatGPT, Qwen, Grok, Nova, DeepSeek, Perplexity) are billed by their company on the key you enter. API keys are stored in this browser only, which is not secure for a public website — for a public site use a protected backend.
       </div>
 
       <div class="field">
@@ -486,6 +486,11 @@ pre.tree { background: #282c34; color: #abb2bf; padding: 12px 14px; border-radiu
         </div>
         <input type="password" id="key-openrouter" placeholder="sk-or-v1-..." autocomplete="off">
       </div>
+
+      <div class="note" style="background:var(--bg-soft);border-color:var(--line)">
+        <b>Own-key AIs</b> — ChatGPT, Qwen, Grok, Nova, DeepSeek, Perplexity. Each company bills the key you enter here (usually paid). Leave a key empty to not use that AI. If the AI answers "model not found", change its model name below its key.
+      </div>
+      <div id="direct-keys" style="display:flex;flex-direction:column;gap:18px"></div>
 
       <div class="field">
         <label for="system-prompt">Custom system prompt / AI personality</label>
@@ -538,9 +543,20 @@ const OR_FAMILIES = {
   nemotron: { label: 'Nemotron', desc: 'NVIDIA Nemotron', letter: 'N', color: '#6aa800', match: /^nvidia\//,        fallback: 'nvidia/nemotron-3.5-super-vl:free' },
   xing:     { label: 'Xing',     desc: 'China Telecom',   letter: 'X', color: '#d6402f', match: /^xingchen-agi\//,  fallback: 'xingchen-agi/xing4.0-29b-a4b:free' }
 };
+// AIs called DIRECTLY with their own API key (each key is entered in Settings). These are usually PAID APIs: the company bills your key.
+// `model` is only the default: you can change it in Settings if the company renames it. `url` is the OpenAI-compatible chat endpoint.
+const DIRECT_PROVIDERS = {
+  chatgpt:    { label: 'ChatGPT',    desc: 'OpenAI',        letter: 'C', color: '#10a37f', url: 'https://api.openai.com/v1/chat/completions',                        model: 'gpt-6-luna',     keyLink: 'https://platform.openai.com/api-keys',      placeholder: 'sk-...',  tokenParam: 'max_completion_tokens', noTemp: true, maxTokens: 4000 },
+  qwen:       { label: 'Qwen',       desc: 'Alibaba Cloud', letter: 'Q', color: '#6d4aff', url: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions', model: 'qwen-flash',     keyLink: 'https://bailian.console.alibabacloud.com/', placeholder: 'sk-...' },
+  grok:       { label: 'Grok',       desc: 'xAI',           letter: 'X', color: '#2b2f38', url: 'https://api.x.ai/v1/chat/completions',                              model: 'grok-4.7',       keyLink: 'https://console.x.ai/',                     placeholder: 'xai-...', maxTokens: 4000 },
+  nova:       { label: 'Nova',       desc: 'Amazon',        letter: 'N', color: '#e8870e', url: 'https://api.nova.amazon.com/v1/chat/completions',                   model: 'nova-2-lite-v1', keyLink: 'https://nova.amazon.com/dev',               placeholder: 'Nova API key' },
+  deepseek:   { label: 'DeepSeek',   desc: 'DeepSeek',      letter: 'D', color: '#3b6cf6', url: 'https://api.deepseek.com/chat/completions',                         model: 'deepseek-flash', keyLink: 'https://platform.deepseek.com/api_keys',    placeholder: 'sk-...' },
+  perplexity: { label: 'Perplexity', desc: 'Sonar',         letter: 'P', color: '#1b8a99', url: 'https://api.perplexity.ai/chat/completions',                        model: 'sonar',          keyLink: 'https://www.perplexity.ai/settings/api',    placeholder: 'pplx-...' }
+};
 const PROVIDER_META = {
   gemini:     { label: 'Gemini',     desc: 'Google AI',   letter: 'G', color: '#0d9b83' },
   openrouter: { label: 'OpenRouter', desc: 'Free models', letter: 'O', color: '#7c5cff' },
+  ...DIRECT_PROVIDERS,
   ...OR_FAMILIES
 };
 const freeModelCache = {};
@@ -618,6 +634,8 @@ const state = {
   abortController: null
 };
 
+Object.keys(DIRECT_PROVIDERS).forEach(k => { state.keys[k] = store.get('sohaib_key_' + k); });
+
 /* ================= DOM ================= */
 const $ = (id) => document.getElementById(id);
 const sidebar = $('sidebar'), mobileOverlay = $('mobile-overlay');
@@ -630,7 +648,7 @@ const settingsModal = $('settings-modal'), deployModal = $('deploy-modal');
 const aiMenu = $('ai-provider-menu'), aiAvatar = $('active-ai-avatar');
 
 /* ===== Add the extra AIs (Qwen, Nova, Grok, DeepSeek) to the selector and menu ===== */
-Object.keys(OR_FAMILIES).forEach(key => {
+[...Object.keys(DIRECT_PROVIDERS), ...Object.keys(OR_FAMILIES)].forEach(key => {
   const m = PROVIDER_META[key];
   const opt = document.createElement('option');
   opt.value = key; opt.textContent = `${m.label} Free`;
@@ -639,7 +657,7 @@ Object.keys(OR_FAMILIES).forEach(key => {
   const btn = document.createElement('button');
   btn.type = 'button'; btn.className = 'provider-option'; btn.dataset.provider = key; btn.setAttribute('role', 'menuitem');
   btn.innerHTML = `<span class="dot" style="background:${m.color}22;color:${m.color}">${m.letter}</span>
-    <span class="txt"><span class="name">${m.label} Free</span><span class="desc">${m.desc} · via OpenRouter</span></span>
+    <span class="txt"><span class="name">${m.label} Free</span><span class="desc">${m.desc}${DIRECT_PROVIDERS[key] ? ' · own API key' : ' · free via OpenRouter'}</span></span>
     <i data-check="${key}" class="fa-solid fa-check check hidden"></i>`;
   aiMenu.appendChild(btn);
 });
@@ -791,7 +809,24 @@ function showInlineAlert(html) {
 }
 
 /* ================= SETTINGS ================= */
+function buildDirectFields() {
+  const box = $('direct-keys');
+  box.innerHTML = '';
+  Object.entries(DIRECT_PROVIDERS).forEach(([id, p]) => {
+    const div = document.createElement('div');
+    div.className = 'field';
+    div.innerHTML = `
+      <div class="row"><label for="key-${id}">${p.label} API Key <small>(${p.desc})</small></label>
+        <a href="${p.keyLink}" target="_blank" rel="noopener">Get key ↗</a></div>
+      <input type="password" id="key-${id}" placeholder="${p.placeholder}" autocomplete="off">
+      <input type="text" id="model-${id}" autocomplete="off" spellcheck="false" style="margin-top:6px;font-size:12px" placeholder="Model name (default: ${p.model})">`;
+    box.appendChild(div);
+    $('key-' + id).value = state.keys[id] || '';
+    $('model-' + id).value = store.get('sohaib_model_' + id);
+  });
+}
 function openSettings() {
+  buildDirectFields();
   $('key-gemini').value = state.keys.gemini;
   $('key-openrouter').value = state.keys.openrouter;
   $('system-prompt').value = state.systemPrompt;
@@ -805,12 +840,17 @@ $('save-settings-btn').addEventListener('click', () => {
   state.systemPrompt = $('system-prompt').value.trim() || DEFAULT_SYSTEM_PROMPT;
   store.set('sohaib_key_gemini', state.keys.gemini);
   store.set('sohaib_key_openrouter', state.keys.openrouter);
+  Object.keys(DIRECT_PROVIDERS).forEach(id => {
+    state.keys[id] = ($('key-' + id)?.value || '').trim();
+    store.set('sohaib_key_' + id, state.keys[id]);
+    store.set('sohaib_model_' + id, ($('model-' + id)?.value || '').trim());
+  });
   store.set('sohaib_system_prompt', state.systemPrompt);
   updateApiKeyBadge();
   settingsModal.classList.add('hidden');
 });
 function updateApiKeyBadge() {
-  const ok = state.keys.gemini || state.keys.openrouter;
+  const ok = Object.values(state.keys).some(Boolean);
   const b = $('api-key-badge');
   b.className = 'badge ' + (ok ? 'ok' : 'warn');
   b.textContent = ok ? 'Configured' : 'Keys Needed';
@@ -923,9 +963,9 @@ function historyFor(chat, excludeIndex) {
 
 async function fetchAIResponse(chat) {
   const provider = state.selectedModel;
-  const apiKey = provider === 'gemini' ? state.keys.gemini : state.keys.openrouter; // every non-Gemini AI uses the OpenRouter key
+  const apiKey = provider === 'gemini' ? state.keys.gemini : DIRECT_PROVIDERS[provider] ? state.keys[provider] : state.keys.openrouter;
   if (!apiKey) {
-    showInlineAlert(`Missing API key for <strong>${provider === 'gemini' ? 'Gemini' : 'OpenRouter'}</strong>${OR_FAMILIES[provider] ? ` (${OR_FAMILIES[provider].label} free runs through OpenRouter)` : ''}. Open <a href="#" id="alert-settings">Settings</a> to add your key.`);
+    showInlineAlert(`Missing API key for <strong>${provider === 'gemini' ? 'Gemini' : DIRECT_PROVIDERS[provider] ? DIRECT_PROVIDERS[provider].label : 'OpenRouter'}</strong>${OR_FAMILIES[provider] ? ` (${OR_FAMILIES[provider].label} free runs through OpenRouter)` : ''}. Open <a href="#" id="alert-settings">Settings</a> to add your key.`);
     document.getElementById('alert-settings')?.addEventListener('click', (e) => { e.preventDefault(); openSettings(); });
     return;
   }
@@ -949,8 +989,12 @@ async function fetchAIResponse(chat) {
         await callOpenRouter(state.keys.openrouter, chat, idx);
       }
     } else {
-      const model = OR_FAMILIES[provider] ? await resolveFreeModel(provider) : 'openrouter/free';
-      await callOpenRouter(apiKey, chat, idx, model);
+      if (DIRECT_PROVIDERS[provider]) {
+        await callDirect(provider, apiKey, chat, idx);
+      } else {
+        const model = OR_FAMILIES[provider] ? await resolveFreeModel(provider) : 'openrouter/free';
+        await callOpenRouter(apiKey, chat, idx, model);
+      }
     }
   } catch (err) {
     const msg = chat.messages[idx];
@@ -1016,6 +1060,44 @@ async function callGemini(apiKey, chat, idx) {
     throw new Error(reason ? `Gemini blocked the request (${reason}). Try rephrasing.` : 'Gemini returned an empty answer. Please try again.');
   }
   await typewriter(answer, chat, idx);
+}
+
+// Direct call to a provider's own OpenAI-compatible endpoint, with the key typed in Settings.
+async function callDirect(id, apiKey, chat, idx) {
+  const p = DIRECT_PROVIDERS[id];
+  const model = store.get('sohaib_model_' + id) || p.model;
+  const body = {
+    model,
+    messages: [{ role: 'system', content: state.systemPrompt }, ...historyFor(chat, idx)],
+    stream: true
+  };
+  body[p.tokenParam || 'max_tokens'] = p.maxTokens || MAX_TOKENS;
+  if (!p.noTemp) body.temperature = 0.7;
+
+  let response;
+  try {
+    response = await fetch(p.url, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: state.abortController.signal
+    });
+  } catch (e) {
+    if (e?.name === 'AbortError') throw e;
+    throw new Error(`Could not reach ${p.label}. Either you are offline, or ${p.label} blocks calls made straight from a web page (CORS). If it is CORS, this AI needs the Vercel backend (see the Deploy Guide).`);
+  }
+
+  if (!response.ok) {
+    let detail = '';
+    try { const e = await response.json(); detail = e?.error?.message || e?.message || (typeof e?.error === 'string' ? e.error : ''); } catch {}
+    const s = response.status;
+    if (s === 401 || s === 403) throw new Error(`${p.label} rejected your API key (or it has no permission). Check the key in Settings. ${detail}`.trim());
+    if (s === 402) throw new Error(`${p.label} says your account has no credit left. ${detail}`.trim());
+    if (s === 404) throw new Error(`${p.label} does not know the model "${model}". Open Settings and type the correct model name under the ${p.label} key. ${detail}`.trim());
+    if (s === 429) throw new Error(`${p.label} rate limit or quota reached. Wait a bit or check your plan. ${detail}`.trim());
+    throw new Error(`${p.label} error (HTTP ${s}). ${detail}`.trim());
+  }
+  await parseSSE(response, chat, idx);
 }
 
 async function callOpenRouter(apiKey, chat, idx, model = 'openrouter/free') {
