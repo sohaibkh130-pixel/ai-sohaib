@@ -394,7 +394,6 @@ pre.tree { background: #282c34; color: #abb2bf; padding: 12px 14px; border-radiu
         <select id="model-selector" class="sr-only" tabindex="-1" aria-hidden="true">
           <option value="gemini">Gemini Free</option>
           <option value="openrouter">OpenRouter Free</option>
-          <option value="chatgpt">ChatGPT (gpt-oss) Free</option>
         </select>
         <button id="active-ai-avatar" type="button" title="Change AI" aria-label="Change AI provider" aria-haspopup="true" aria-expanded="false">G</button>
         <div id="ai-provider-menu" class="hidden" role="menu">
@@ -407,11 +406,6 @@ pre.tree { background: #282c34; color: #abb2bf; padding: 12px 14px; border-radiu
             <span class="dot o">O</span>
             <span class="txt"><span class="name">OpenRouter Free</span><span class="desc">Free models</span></span>
             <i data-check="openrouter" class="fa-solid fa-check check hidden"></i>
-          </button>
-          <button type="button" class="provider-option" data-provider="chatgpt" role="menuitem">
-            <span class="dot c">C</span>
-            <span class="txt"><span class="name">ChatGPT Free</span><span class="desc">OpenAI gpt-oss · via OpenRouter</span></span>
-            <i data-check="chatgpt" class="fa-solid fa-check check hidden"></i>
           </button>
         </div>
       </div>
@@ -487,7 +481,7 @@ pre.tree { background: #282c34; color: #abb2bf; padding: 12px 14px; border-radiu
 
       <div class="field">
         <div class="row">
-          <label for="key-openrouter">OpenRouter API Key <small>(free models · powers ChatGPT, Qwen, Nova, Grok, DeepSeek)</small></label>
+          <label for="key-openrouter">OpenRouter API Key <small>(free models · also powers Nemotron &amp; Xing)</small></label>
           <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">Get key ↗</a>
         </div>
         <input type="password" id="key-openrouter" placeholder="sk-or-v1-..." autocomplete="off">
@@ -538,12 +532,11 @@ const GEMINI_MODEL = 'gemini-3.5-flash-lite'; // change here if Google renames/r
 // Extra free AIs, all served through OpenRouter with the same OpenRouter key.
 // The site looks up OpenRouter's public model list and picks the newest ":free" model whose ID matches `match`.
 // `fallback` is only used if that lookup fails. Perplexity is not included: it has no free API.
+// NOTE (Oct 2026): OpenRouter currently has NO free versions of ChatGPT/gpt-oss, Qwen, Grok, Nova or DeepSeek.
+// Only families that really have a free model are listed. To add another one, add a line here with a `match` for its model ID.
 const OR_FAMILIES = {
-  chatgpt:  { label: 'ChatGPT',  desc: 'OpenAI gpt-oss',  letter: 'C', color: '#10a37f', match: /^openai\/gpt-oss/,  fallback: 'openai/gpt-oss-20b:free' },
-  qwen:     { label: 'Qwen',     desc: 'Alibaba Qwen',    letter: 'Q', color: '#6d4aff', match: /^qwen\//,           fallback: '' },
-  nova:     { label: 'Nova',     desc: 'Amazon Nova',     letter: 'N', color: '#e8870e', match: /^amazon\/nova/,     fallback: '' },
-  grok:     { label: 'Grok',     desc: 'xAI Grok',        letter: 'X', color: '#2b2f38', match: /^x-ai\/grok/,       fallback: '' },
-  deepseek: { label: 'DeepSeek', desc: 'DeepSeek',        letter: 'D', color: '#3b6cf6', match: /^deepseek\//,       fallback: '' }
+  nemotron: { label: 'Nemotron', desc: 'NVIDIA Nemotron', letter: 'N', color: '#6aa800', match: /^nvidia\//,        fallback: 'nvidia/nemotron-3.5-super-vl:free' },
+  xing:     { label: 'Xing',     desc: 'China Telecom',   letter: 'X', color: '#d6402f', match: /^xingchen-agi\//,  fallback: 'xingchen-agi/xing4.0-29b-a4b:free' }
 };
 const PROVIDER_META = {
   gemini:     { label: 'Gemini',     desc: 'Google AI',   letter: 'G', color: '#0d9b83' },
@@ -559,7 +552,7 @@ async function resolveFreeModel(family) {
     if (res.ok) {
       const list = (await res.json()).data || [];
       const free = list
-        .filter(m => m.id.endsWith(':free') && fam.match.test(m.id))
+        .filter(m => fam.match.test(m.id) && (m.id.endsWith(':free') || (Number(m.pricing?.prompt) === 0 && Number(m.pricing?.completion) === 0)))
         .sort((a, b) => (b.created || 0) - (a.created || 0));
       if (free.length) return (freeModelCache[family] = free[0].id);
     }
@@ -637,7 +630,7 @@ const settingsModal = $('settings-modal'), deployModal = $('deploy-modal');
 const aiMenu = $('ai-provider-menu'), aiAvatar = $('active-ai-avatar');
 
 /* ===== Add the extra AIs (Qwen, Nova, Grok, DeepSeek) to the selector and menu ===== */
-['qwen', 'nova', 'grok', 'deepseek'].forEach(key => {
+Object.keys(OR_FAMILIES).forEach(key => {
   const m = PROVIDER_META[key];
   const opt = document.createElement('option');
   opt.value = key; opt.textContent = `${m.label} Free`;
