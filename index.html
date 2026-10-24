@@ -456,7 +456,19 @@ You communicate naturally and fluently in Moroccan Darija, Standard Arabic, Fren
 Always respond in the primary language used by the user. If the user writes in Moroccan Darija (using Arabic or Latin letters), reply in natural Moroccan Darija.
 You are skilled in software programming, mathematics, creative writing, science, and general tutoring.`;
 
-    let state = {
+    // Public-release migration: remove any API keys saved by the developer's earlier local testing.
+  // This runs once per browser. Each visitor can then enter and save their own key locally.
+  try {
+    if (localStorage.getItem('sohaib_ai_public_keys_reset_v1') !== 'done') {
+      localStorage.removeItem('sohaib_key_gemini');
+      localStorage.removeItem('sohaib_key_openrouter');
+      localStorage.setItem('sohaib_ai_public_keys_reset_v1', 'done');
+    }
+  } catch (storageError) {
+    console.warn('Could not reset previous local API keys:', storageError);
+  }
+
+  let state = {
       chats: JSON.parse(localStorage.getItem('sohaib_ai_chats') || '[]'),
       activeChatId: null,
       keys: {
